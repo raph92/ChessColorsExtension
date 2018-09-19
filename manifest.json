@@ -26,7 +26,8 @@
     {
       "matches": [
         "http://*.lichess.org/*",
-        "https://*.lichess.org/*"
+        "https://*.lichess.org/*",
+        "https://*.chess.com/*"
       ],
       "js": [
         "js/jquery-3.2.1.min.js",
@@ -50,7 +51,8 @@
 	],
   "web_accessible_resources": [
     "js/jquery-3.2.1.min.js",
-    "js/socket.js"
+    "js/socket.js",
+    "js/chesscomListener.js"
   ],
   "externally_connectable": {
     "matches": ["*://*.lichess.org/*","*://*.chess.com/*", "*://localhost/*"]

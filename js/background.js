@@ -1,4 +1,3 @@
-
 let move = null;
 let conn;
 let cache = null;
@@ -35,33 +34,33 @@ chrome.tabs.query({pinned: true}, function (e) {
 function onEvent(debuggeeId, message, params) {
     if (tabId !== debuggeeId.tabId)
         return;
-
-    if (message === "Network.webSocketFrameSent") {
-        // do something with params.response.payloadData,
-        //   it contains the data SENT
-        // console.log(params.response.payloadData)
-    } else if (message === "Network.webSocketFrameReceived") {
+    if (message === "Network.webSocketFrameReceived") {
         // do something with params.response.payloadData,
         //   it contains the data RECEIVED
         try {
             let data = JSON.parse(params.response.payloadData);
             if (data.t === "move") {
                 console.log(params.response.payloadData);
-                let dataDict = {}; 
-                // dataDict.fen = data.d.fen + " " + toMove(moveNumber)[0] + " - - 0 1";
+                let dataDict = {};
                 dataDict.fen = data.d.fen;
                 fen = dataDict.fen;
                 send(JSON.stringify(dataDict), "board_request");
             }
-            else {
-                // console.log("Unhandled data: " + e.data);
-            }
-        } catch(e){
+        } catch (e) {
             console.log(e);
         }
         console.log(params.response.payloadData);
     }
 }
+
+
+// listen for content script messages
+chrome.runtime.onMessage.addListener(function (request, _, _1) {  // callback function not used in favor of async, tab specific response
+    if (request.type === 'fen') {
+        send(JSON.stringify(request), "board_request")
+    }
+
+});
 
 // send move to content.js
 function receivedBoardState(boardState) {
@@ -111,14 +110,14 @@ function initConn() {
 
     conn.onmessage = function (e) { // receive message from mothership
         console.log(e.data);
-            if (e.data.indexOf("board_state") > -1){
-                {
-                    let boardstate = e.data.split("board_state")[1];
-                    JSON.parse(boardstate);
-                    receivedBoardState(boardstate);
-                }
+        if (e.data.indexOf("board_state") > -1) {
+            {
+                let boardstate = e.data.split("board_state")[1];
+                JSON.parse(boardstate);
+                receivedBoardState(boardstate);
+            }
         }
-        
+
     };
     conn.onclose = function () {
         console.log("Awaiting MotherShip.");

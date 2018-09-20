@@ -8,7 +8,9 @@ let $ = window.jQuery;
 if (location.href.indexOf("chess.com") > -1) {
 
 }
-
+attacked = "#F39BB1";
+defenedColor = "#9BF3A0";
+neutralColor = "#FFE600";
 
 let squareRowDictionary;
 let squareColDictionary;
@@ -17,40 +19,42 @@ let board;
 let color;
 let squareSize;
 
-let blackOwned = $('<div/>', {
-    class: 'domText',
-});
-let whiteOwned = $('<div/>', {
-    class: 'domText',
-});
-let neutralOwned = $('<div/>', {
-    class: 'domText',
-});
-$('<p style="color:red">B</p>').appendTo(blackOwned);
-$('<p style="color:lawngreen">W</p>').appendTo(whiteOwned);
-$('<p style="color:gray">N</p>').appendTo(neutralOwned);
+let ready = false;
 
-let attackSquare = $('<div/>', {
-    class: "customSquare",
-    style:"background-color: #F39BB1"
-});
-let defendedSquare = $('<div/>', {
-    class: "customSquare",
-    style: "background-color: #9BF3A0"
-});
-let neutralSquare = $('<div/>', {
-    class: "customSquare",
-    style: "background-color: #FFE600"
-});
+
 let style = $("<style/>").prependTo("body");
+let squares = {};
+let ownedTexts = {};
+
+function renderWhiteSide() {
+    for (let y = 0; y < 8; y++) {
+        for (let x = 0; x < 8; x++) {
+            let letters = "ABCDEFGH".split("");
+            let numbers = "12345678".split("");
+            let name = letters[x] + numbers[y];
+            squares[name] = $('<div/>', {
+                class: "customSquare",
+                name: "cs-" + name,
+            });
+            ownedTexts[name] = $('<div/>', {
+                class: "domText",
+                name: "d-" + name,
+            }).append('<p/>');
+        }
+    }
+}
+
+console.log(squares);
 
 function LoadChessComDivs() {
+    // $("[id*=container]").remove();
     if (location.href.indexOf("computer") > -1) {
         board = $("#chessboard_boardarea");
     }
     else {
-        board = document.elementFromPoint(50, 50).children[0].getElementsByClassName("chessboard")
+        board = document.elementFromPoint(50, 50).children[0].getElementsByClassName("chessboard")[0]
     }
+
     board = $(board);
     console.log("Board is", board);
     squareSize = $(".chess_com_piece").first().attr("width");
@@ -95,6 +99,52 @@ function LoadChessComDivs() {
         "G": squareSize * 6,
         "H": squareSize * 7,
     };
+    let col;
+    let row;
+
+    for (let key in squares) {
+        if (squares.hasOwnProperty(key)) {
+            col = squareColDictionary[key[0]];
+            row = squareRowDictionary[key[1]];
+            if (color === "black") {
+                // flip dictionary
+                row = Math.abs(row - (squareSize * 7));
+                col = Math.abs(col - (squareSize * 7));
+            }
+            squares[key].css({transform: `translate(${col}px, ${row}px)`});
+        }
+    }
+    for (let key in ownedTexts) {
+        if (ownedTexts.hasOwnProperty(key)) {
+            col = squareColDictionary[key[0]];
+            row = squareRowDictionary[key[1]];
+            if (color === "black") {
+                // flip dictionary
+                row = Math.abs(row - (squareSize * 7));
+                col = Math.abs(col - (squareSize * 7));
+            }
+            ownedTexts[key].css({transform: `translate(${col}px, ${row}px)`});
+        }
+    }
+
+}
+
+function reInitDivs(){
+    console.log("Removing all custom elements and reinitializing.");
+    $('.domText').remove();
+    $('.customSquare').remove();
+    squares = {};
+    ownedTexts = {};
+    renderWhiteSide();
+    LoadChessComDivs();
+    for (let key in squares) {
+        if (squares.hasOwnProperty(key))
+            squares[key].prependTo(board);
+    }
+    for (let key in ownedTexts) {
+        if (ownedTexts.hasOwnProperty(key))
+            ownedTexts[key].prependTo(board);
+    }
 }
 
 if (location.href.indexOf("chess.com") > -1) {
@@ -106,24 +156,29 @@ if (location.href.indexOf("chess.com") > -1) {
     }
 
 
-    $(window).on("load", function () {
-        injectJavaScript('js/chesscomListener.js', function () {
-            console.log('injected chesscomListener.js');
-        });
+    $(['id*=container']).ready(function () {
+        renderWhiteSide();
+        LoadChessComDivs();
         injectJavaScript('js/jquery-3.2.1.min.js', function () {
             console.log('injected jquery-3.2.1.min.js');
         });
-        // right under chessboard_r7cdnp2
-
-
-        // neutralOwned.append(neutralText);
-        // blackOwned.append(blackText);
-        // whiteOwned.append(whiteText);
-        LoadChessComDivs();
+        injectJavaScript('js/chesscomListener.js', function () {
+            console.log('injected chesscomListener.js');
+        });
+        for (let key in squares) {
+            if (squares.hasOwnProperty(key))
+                squares[key].prependTo(board);
+        }
+        for (let key in ownedTexts) {
+            if (ownedTexts.hasOwnProperty(key))
+                ownedTexts[key].prependTo(board);
+        }
+        ready = true;
         console.log("ChessCom fully loaded.");
     });
 
 }
+
 else {
     board = $(".cg-board-wrap");
     squareSize = 64;
@@ -178,71 +233,54 @@ window.addEventListener('message', function (event) {
         chrome.runtime.sendMessage(event.data, function (response) {
         });
     }
+    else if (event.data.type === 'render') {
+        console.log("Re-rendering.");
+        color = event.data.color;
+        LoadChessComDivs();
+    }
 });
 
 // receive messages from background.js
 chrome.runtime.onMessage.addListener(
     function (data) {
-        console.log("Received message from Mothership");
-        console.log(data);
+        console.log("Received message from Mothership\nType:", data.type);
         if (data.type === "state") {
-            console.log("Received board state.", data);
             UpdateBoard(JSON.parse(data.state));
+        }
+        if (data.type === "find") {
+            reInitDivs();
+        }
+
+        if (data.type === "flip") {
+            LoadChessComDivs();
         }
 
     });
 
-// function piecesToDict() {
-//     let dict = {};
-//     $("piece").each(function () {
-//         let offsetStr;
-//         let offsetCol;
-//         let offsetRow;
-//         try {
-//             offsetStr = re.exec($(this)[0].style.cssText)[0].replaceAll("px", "").replaceAll(" ", "");
-//             offsetCol = squareColDictionary[offsetStr.split(",")[0]];
-//             offsetRow = squareRowDictionary[offsetStr.split(",")[1]];
-//             dict[$(this)[0].className] = offsetCol + offsetRow;
-//         } catch {
-//         }
-//     });
-//     console.log(JSON.stringify(dict));
-//     return dict;
-// }
-
 function UpdateBoard(data) {
-    $('.domText').remove();
-    $('.customSquare').remove();
-    LoadChessComDivs();
-    console.log("Updating board square colors.");
-    let col;
-    let row;
-    let cssText;
-    console.log(data);
+    console.log("Received board state.", data);
+    if (!ready)
+        return;
+    $('.domText').hide();
+    $('.customSquare').hide();
+    console.log("Updating board square colors...");
     data.cells.forEach(function (square) {
         for (let key in square) {
             if (square.hasOwnProperty(key)) {
-                col = squareColDictionary[key[0]];
-                row = squareRowDictionary[key[1]];
-                if (color === "black") {
-                    // flip dictionary
-                    row = Math.abs(row - (squareSize * 7));
-                    col = Math.abs(col - (squareSize * 7));
-                }
                 if (square[key] === "Black") {
-                    let div = blackOwned.clone(true);
-                    div.css({transform: `translate(${col}px, ${row}px)`});
-                    board.prepend(div);
+                    $(ownedTexts[key]).find("p").text("B").css({color: "black"});
+                    $(ownedTexts[key]).show();
                 }
                 else if (square[key] === "White") {
-                    let div = whiteOwned.clone(true);
-                    div.css({transform: `translate(${col}px, ${row}px)`});
-                    board.prepend(div);
+                    $(ownedTexts[key]).find("p").text("W").css({color: "white"});
+                    $(ownedTexts[key]).show();
                 }
                 else if (square[key] === "Neutral") {
-                    let div = neutralOwned.clone(true);
-                    div.css({transform: `translate(${col}px, ${row}px)`});
-                    board.prepend(div);
+                    $(ownedTexts[key]).find("p").text("N").css({color: "gray"});
+                    $(ownedTexts[key]).show();
+                }
+                else{
+                    $(ownedTexts[key]).hide();
                 }
             }
         }
@@ -250,32 +288,24 @@ function UpdateBoard(data) {
     data.pieces.forEach(function (piece) {
         for (let key in piece) {
             if (piece.hasOwnProperty(key)) {
-                console.log("Processing", key);
-                col = squareColDictionary[key[0]];
-                row = squareRowDictionary[key[1]];
-                if (color === "black") {
-                    // flip dictionary
-                    row = Math.abs(row - (squareSize * 7));
-                    col = Math.abs(col - (squareSize * 7));
-                }
-                console.log("Col", col, "row", row);
-                console.log("Square state is", piece[key]);
                 if (piece[key] === "Protected") {
-                    let div = defendedSquare.clone(true);
-                    div.css({transform: `translate(${col}px, ${row}px)`});
-                    board.prepend(div);
+                    squares[key].css({"background-color": defenedColor});
+                    squares[key].show();
                 }
                 else if (piece[key] === "Attacked") {
-                    let div = attackSquare.clone(true);
-                    div.css({transform: `translate(${col}px, ${row}px)`});
-                    board.prepend(div);
+                    squares[key].css({"background-color": attacked});
+                    squares[key].show();
                 }
                 else if (piece[key] === "Neutral") {
-                    let div = neutralSquare.clone(true);
-                    div.css({transform: `translate(${col}px, ${row}px)`});
-                    board.prepend(div);
+
+                    squares[key].css({"background-color": neutralColor});
+                    squares[key].show();
+                }
+                else{
+                    squares[key].hide();
                 }
             }
         }
     });
+    console.log("Finished.");
 }

@@ -1,11 +1,12 @@
-﻿var popup = setInterval(function () {
-    var draw = document.getElementsByClassName('drawResignButtons');
+﻿console.log("popup.js loaded.");
+function reFindBoard(){
+    console.log("Sending find command to background.js");
+    chrome.runtime.sendMessage({type: "find"});
+}
+function flipBoard(){
+    console.log("Sending find command to background.js");
+    chrome.runtime.sendMessage({type: "flip"});
+}
+document.getElementById('find-btn').addEventListener('click', reFindBoard);
 
-    if (draw.length === 2) {
-        var classname = draw[1].getAttribute('class');
-        if (classname.indexOf('hidden') === -1) {
-            window.alert("game started!");
-            clearInterval(blah);
-        }
-    }
-}, 50);
+document.getElementById('flip').addEventListener('click', flipBoard);

@@ -10,7 +10,6 @@ let paused = false;
 let tabId = 0;
 
 let fen = "";
-let mover = "";
 // get tabId
 chrome.tabs.query({pinned: true}, function (e) {
     tabId = e[0].id;
@@ -58,6 +57,14 @@ function onEvent(debuggeeId, message, params) {
 chrome.runtime.onMessage.addListener(function (request, _, _1) {  // callback function not used in favor of async, tab specific response
     if (request.type === 'fen') {
         send(JSON.stringify(request), "board_request")
+    }
+    else if (request.type === 'find') {
+        console.log("Sending reFind request to content.");
+        sendToContent({type: "find"})
+    }
+    else if (request.type === 'flip') {
+        console.log("Sending flip request to content.");
+        sendToContent({type: "flip"})
     }
 
 });

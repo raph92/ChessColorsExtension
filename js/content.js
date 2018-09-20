@@ -9,95 +9,124 @@ if (location.href.indexOf("chess.com") > -1) {
 
 }
 
-let re = /\d+px, \d+px/;
-
 
 let squareRowDictionary;
 let squareColDictionary;
-let attackSquare;
-let defendedSquare;
-let neutralSquare;
+
 let board;
+let color;
+let squareSize;
+
+let blackOwned = $('<div/>', {
+    class: 'domText',
+});
+let whiteOwned = $('<div/>', {
+    class: 'domText',
+});
+let neutralOwned = $('<div/>', {
+    class: 'domText',
+});
+$('<p style="color:red">B</p>').appendTo(blackOwned);
+$('<p style="color:lawngreen">W</p>').appendTo(whiteOwned);
+$('<p style="color:gray">N</p>').appendTo(neutralOwned);
+
+let attackSquare = $('<div/>', {
+    class: "customSquare",
+    style:"background-color: #F39BB1"
+});
+let defendedSquare = $('<div/>', {
+    class: "customSquare",
+    style: "background-color: #9BF3A0"
+});
+let neutralSquare = $('<div/>', {
+    class: "customSquare",
+    style: "background-color: #FFE600"
+});
+let style = $("<style/>").prependTo("body");
+
+function LoadChessComDivs() {
+    if (location.href.indexOf("computer") > -1) {
+        board = $("#chessboard_boardarea");
+    }
+    else {
+        board = document.elementFromPoint(50, 50).children[0].getElementsByClassName("chessboard")
+    }
+    board = $(board);
+    console.log("Board is", board);
+    squareSize = $(".chess_com_piece").first().attr("width");
+    console.log("Square size is", squareSize);
+    style.html(
+        `.domText p {
+            font-size: xx-large;  
+        }
+        .domText {
+            width: ${squareSize}px;
+            height: ${squareSize}px;
+            position: absolute;
+            text-align: center;
+            z-index: 5;     
+        }
+        .customSquare{
+            position: absolute;
+            z-index: 2;
+            pointer-events: none;
+            opacity: 0.9;
+            width: ${squareSize}px;
+            height: ${squareSize}px;
+        }`);
+    squareRowDictionary = {
+        1: squareSize * 7,
+        2: squareSize * 6,
+        3: squareSize * 5,
+        4: squareSize * 4,
+        5: squareSize * 3,
+        6: squareSize * 2,
+        7: squareSize,
+        8: 0,
+    };
+
+    squareColDictionary = {
+        "A": 0,
+        "B": squareSize,
+        "C": squareSize * 2,
+        "D": squareSize * 3,
+        "E": squareSize * 4,
+        "F": squareSize * 5,
+        "G": squareSize * 6,
+        "H": squareSize * 7,
+    };
+}
+
 if (location.href.indexOf("chess.com") > -1) {
     function injectJavaScript(scriptName, callback) {
-        var script = document.createElement('script');
+        let script = document.createElement('script');
         script.src = chrome.extension.getURL(scriptName);
         script.addEventListener('load', callback, false);
         (document.head || document.documentElement).appendChild(script);
     }
 
-    injectJavaScript('js/chesscomListener.js', function () {
-        console.log('injected chesscomListener.js');
-    });
-    window.addEventListener('message', function (event) {
 
-        if (event.data.type === 'fen') {
-            chrome.runtime.sendMessage(event.data, function (response) {
-            });
-        }
-    });
-    board = $("#chessboard_boardarea");
+    $(window).on("load", function () {
+        injectJavaScript('js/chesscomListener.js', function () {
+            console.log('injected chesscomListener.js');
+        });
+        injectJavaScript('js/jquery-3.2.1.min.js', function () {
+            console.log('injected jquery-3.2.1.min.js');
+        });
+        // right under chessboard_r7cdnp2
 
-    squareRowDictionary = {
-        665: 1,
-        570: 2,
-        475: 3,
-        380: 4,
-        285: 5,
-        190: 6,
-        95: 7,
-        0: 8
-    };
-    squareColDictionary = {
-        665: "H",
-        570: "G",
-        475: "F",
-        380: "E",
-        285: "D",
-        190: "C",
-        95: "B",
-        0: "A"
-    };
 
-    attackSquare = document.createElement('div');
-    attackSquare.className = "customSquare";
-
-    defendedSquare = document.createElement('div');
-    defendedSquare.className = "customSquare";
-
-    neutralSquare = document.createElement('div');
-    neutralSquare.className = "customSquare";
-    $(attackSquare).css({
-        position: "absolute",
-        "z-index": 2,
-        "pointer-events": "none",
-        opacity: 0.9,
-        width: "95px",
-        height: "95px",
-        "background-color": "#F39BB1",
-    });
-    $(neutralSquare).css({
-        position: "absolute",
-        "z-index": 2,
-        "pointer-events": "none",
-        opacity: 0.9,
-        width: "95px",
-        height: "95px",
-        "background-color": "#FFE600"
-    });
-    $(defendedSquare).css({
-        position: "absolute",
-        "z-index": 2,
-        "pointer-events": "none",
-        opacity: 0.9,
-        width: "95px",
-        height: "95px",
-        "background-color": "#9BF3A0"
+        // neutralOwned.append(neutralText);
+        // blackOwned.append(blackText);
+        // whiteOwned.append(whiteText);
+        LoadChessComDivs();
+        console.log("ChessCom fully loaded.");
     });
 
 }
 else {
     board = $(".cg-board-wrap");
+    squareSize = 64;
     squareRowDictionary = {
         448: 1,
         384: 2,
@@ -127,42 +156,37 @@ else {
     neutralSquare = document.createElement('square');
     neutralSquare.className = "customSquare";
     $(attackSquare).css({
-        height: "64px",
-        width: "64px",
+        height: squareSize + "px",
+        width: squareSize + "px",
         "background-color": "#F39BB1",
     });
     $(neutralSquare).css({
-        height: "64px",
-        width: "64px",
+        height: squareSize + "px",
+        width: squareSize + "px",
         "background-color": "#FFE600"
     });
     $(defendedSquare).css({
-        height: "64px",
-        width: "64px",
+        height: squareSize + "px",
+        width: squareSize + "px",
         "background-color": "#9BF3A0"
     });
 }
 
-
-String.prototype.replaceAll = function (search, replacement) {
-    let target = this;
-    return target.replace(new RegExp(search, 'g'), replacement);
-};
-Object.prototype.reverseSearch = function (search) {
-    const target = this;
-    for (let key in target)
-        if (target[key] == search)
-            return key;
-    return null;
-};
+window.addEventListener('message', function (event) {
+    if (event.data.type === 'fen') {
+        color = event.data.color;
+        chrome.runtime.sendMessage(event.data, function (response) {
+        });
+    }
+});
 
 // receive messages from background.js
 chrome.runtime.onMessage.addListener(
-    function (data, _, _1) {
+    function (data) {
         console.log("Received message from Mothership");
         console.log(data);
         if (data.type === "state") {
-            console.log("Received board state.");
+            console.log("Received board state.", data);
             UpdateBoard(JSON.parse(data.state));
         }
 
@@ -187,41 +211,71 @@ chrome.runtime.onMessage.addListener(
 // }
 
 function UpdateBoard(data) {
-    $(".customSquare").remove();
+    $('.domText').remove();
+    $('.customSquare').remove();
+    LoadChessComDivs();
     console.log("Updating board square colors.");
     let col;
     let row;
     let cssText;
     console.log(data);
-    data.forEach(function (square) {
+    data.cells.forEach(function (square) {
         for (let key in square) {
-            if (!square.hasOwnProperty(key))
-                return;
-            console.log("Processing", key);
-            col = squareColDictionary.reverseSearch(key[0]);
-            row = squareRowDictionary.reverseSearch(key[1]);
-            cssText = `transform: translate(${col}px, ${row}px);`;
-            console.log("Col", col, "row", row, "cssText", cssText);
-            console.log("Square state is", square[key]);
-            if (square[key] === "Protected") {
-                let div = defendedSquare.cloneNode(true);
-                div.style.cssText += cssText;
-                board.append(div);
-            }
-            else if (square[key] === "Attacked") {
-                let div = attackSquare.cloneNode(true);
-                div.style.cssText += cssText;
-                board.append(div);
-            }
-            else if (square[key] === "Neutral") {
-                let div = neutralSquare.cloneNode(true);
-                div.style.cssText += cssText;
-                board.append(div);
-            }
-            else {
+            if (square.hasOwnProperty(key)) {
+                col = squareColDictionary[key[0]];
+                row = squareRowDictionary[key[1]];
+                if (color === "black") {
+                    // flip dictionary
+                    row = Math.abs(row - (squareSize * 7));
+                    col = Math.abs(col - (squareSize * 7));
+                }
+                if (square[key] === "Black") {
+                    let div = blackOwned.clone(true);
+                    div.css({transform: `translate(${col}px, ${row}px)`});
+                    board.prepend(div);
+                }
+                else if (square[key] === "White") {
+                    let div = whiteOwned.clone(true);
+                    div.css({transform: `translate(${col}px, ${row}px)`});
+                    board.prepend(div);
+                }
+                else if (square[key] === "Neutral") {
+                    let div = neutralOwned.clone(true);
+                    div.css({transform: `translate(${col}px, ${row}px)`});
+                    board.prepend(div);
+                }
             }
         }
     });
-
-
+    data.pieces.forEach(function (piece) {
+        for (let key in piece) {
+            if (piece.hasOwnProperty(key)) {
+                console.log("Processing", key);
+                col = squareColDictionary[key[0]];
+                row = squareRowDictionary[key[1]];
+                if (color === "black") {
+                    // flip dictionary
+                    row = Math.abs(row - (squareSize * 7));
+                    col = Math.abs(col - (squareSize * 7));
+                }
+                console.log("Col", col, "row", row);
+                console.log("Square state is", piece[key]);
+                if (piece[key] === "Protected") {
+                    let div = defendedSquare.clone(true);
+                    div.css({transform: `translate(${col}px, ${row}px)`});
+                    board.prepend(div);
+                }
+                else if (piece[key] === "Attacked") {
+                    let div = attackSquare.clone(true);
+                    div.css({transform: `translate(${col}px, ${row}px)`});
+                    board.prepend(div);
+                }
+                else if (piece[key] === "Neutral") {
+                    let div = neutralSquare.clone(true);
+                    div.css({transform: `translate(${col}px, ${row}px)`});
+                    board.prepend(div);
+                }
+            }
+        }
+    });
 }

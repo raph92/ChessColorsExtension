@@ -113,7 +113,6 @@ function initConn() {
         if (e.data.indexOf("board_state") > -1) {
             {
                 let boardstate = e.data.split("board_state")[1];
-                JSON.parse(boardstate);
                 receivedBoardState(boardstate);
             }
         }

@@ -26,10 +26,10 @@ setInterval(function () {
 }, 200)
 
 function getColor () {
-  let element = document.querySelectorAll('.evaluation-bar-color')
+  let element = document.getElementsByClassName('evaluation-bar-fill')[0].children
   console.log(element)
   const userColor = element[1]
-  return 'white' in userColor.attributes ? 'white' : 'black'
+  return userColor.className.indexOf('white') > -1  ? 'white' : 'black'
 }
 
 function sendFen (fen) {

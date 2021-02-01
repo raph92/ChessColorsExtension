@@ -27,33 +27,37 @@
       "matches": [
         "http://*.lichess.org/*",
         "https://*.lichess.org/*",
-        "https://*.chess.com/*"
+        "https://*.chess.com/*analysis*",
+        "http://*.chess.com/*analysis*"
       ],
       "js": [
         "js/jquery-3.2.1.min.js",
         "js/content.js"
-
       ],
       "run_at": "document_end"
     }
   ],
-
-	"permissions": [
-		"https://*.lichess.org/*",
-		"https://*.chess.com/*analysis*",
-		"http://*.lichess.org/*",
-		"http://*.chess.com/*analysis*",
-		"activeTab",
-		"tabs",
-		"storage",
-		"debugger"
-	],
+  "permissions": [
+    "https://*.lichess.org/*",
+    "https://*.chess.com/*analysis*",
+    "http://*.chess.com/*analysis*",
+    "http://*.lichess.org/*",
+    "activeTab",
+    "tabs",
+    "storage",
+    "debugger"
+  ],
   "web_accessible_resources": [
     "js/jquery-3.2.1.min.js",
     "js/socket.js",
     "js/chesscomListener.js"
   ],
   "externally_connectable": {
-    "matches": ["*://*.lichess.org/*","*://*.chess.com/*", "*://localhost/*"]
+    "matches": [
+      "*://*.lichess.org/*",
+      "https://*.chess.com/*analysis*",
+      "http://*.chess.com/*analysis*",
+      "*://localhost/*"
+    ]
   }
 }

@@ -1,11 +1,11 @@
 ﻿console.log("popup.js loaded.");
 function reFindBoard(){
     console.log("Sending find command to background.js");
-    chrome.runtime.sendMessage({type: "find"});
+    chrome.runtime.sendMessage(null,{type: "find"});
 }
 function flipBoard(){
     console.log("Sending find command to background.js");
-    chrome.runtime.sendMessage({type: "flip"});
+    chrome.runtime.sendMessage(null, {type: "flip"});
 }
 document.getElementById('find-btn').addEventListener('click', reFindBoard);
 

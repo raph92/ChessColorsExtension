@@ -40,10 +40,9 @@
 
 	"permissions": [
 		"https://*.lichess.org/*",
-		"https://*.chess.com/*",
+		"https://*.chess.com/*analysis*",
 		"http://*.lichess.org/*",
-		"http://*.chess.com/*",
-		"http://*/",
+		"http://*.chess.com/*analysis*",
 		"activeTab",
 		"tabs",
 		"storage",

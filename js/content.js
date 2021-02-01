@@ -8,9 +8,9 @@ let $ = window.jQuery;
 if (location.href.indexOf("chess.com") > -1) {
 
 }
-attacked = "#F39BB1";
-defenedColor = "#9BF3A0";
-neutralColor = "#FFE600";
+ATTACKED = "#F39BB1";
+DEFENDED = "#9BF3A0";
+NEUTRAL = "#FFE600";
 
 let squareRowDictionary;
 let squareColDictionary;
@@ -25,7 +25,7 @@ let ready = false;
 let style = $("<style/>").prependTo("body");
 let squares = {};
 let ownedTexts = {};
-
+let scoreTexts = {};
 function renderWhiteSide() {
     for (let y = 0; y < 8; y++) {
         for (let x = 0; x < 8; x++) {
@@ -39,7 +39,9 @@ function renderWhiteSide() {
             ownedTexts[name] = $('<div/>', {
                 class: "domText",
                 name: "d-" + name,
-            }).append('<p/>');
+            })
+            .append('<p class="dominance"/>')
+            .append('<p class="score"/>')
         }
     }
 }
@@ -48,33 +50,28 @@ console.log(squares);
 
 function LoadChessComDivs() {
     // $("[id*=container]").remove();
-    if (location.href.indexOf("computer") > -1) {
-        board = $("#chessboard_boardarea");
-    }
-    else {
-        board = document.elementFromPoint(50, 50).children[0].getElementsByClassName("chessboard")[0]
-    }
-
-    board = $(board);
+    board = $("chess-board");
     console.log("Board is", board);
-    squareSize = $(".chess_com_piece").first().attr("width");
+    squareSize = document.getElementsByClassName('piece')[0].offsetWidth
     console.log("Square size is", squareSize);
     style.html(
         `.domText p {
-            font-size: xx-large;  
+            font-size: large;  
         }
         .domText {
             width: ${squareSize}px;
             height: ${squareSize}px;
             position: absolute;
             text-align: center;
-            z-index: 5;     
+            z-index: 5;
+            top: 4.5%;    
+            font-size: smallers 
         }
         .customSquare{
             position: absolute;
-            z-index: 2;
+            z-index: 0;
             pointer-events: none;
-            opacity: 0.9;
+            opacity: 0.75;
             width: ${squareSize}px;
             height: ${squareSize}px;
         }`);
@@ -126,6 +123,18 @@ function LoadChessComDivs() {
             ownedTexts[key].css({transform: `translate(${col}px, ${row}px)`});
         }
     }
+    for (let key in scoreTexts) {
+        if (scoreTexts.hasOwnProperty(key)) {
+            col = squareColDictionary[key[0]];
+            row = squareRowDictionary[key[1]];
+            if (color === "black") {
+                // flip dictionary
+                row = Math.abs(row - (squareSize * 7));
+                col = Math.abs(col - (squareSize * 7));
+            }
+            scoreTexts[key].css({transform: `translate(${col}px, ${row}px)`});
+        }
+    }
 
 }
 
@@ -156,7 +165,7 @@ if (location.href.indexOf("chess.com") > -1) {
     }
 
 
-    $(['id*=container']).ready(function () {
+    $('chess-board').ready(function () {
         renderWhiteSide();
         LoadChessComDivs();
         injectJavaScript('js/jquery-3.2.1.min.js', function () {
@@ -166,13 +175,14 @@ if (location.href.indexOf("chess.com") > -1) {
             console.log('injected chesscomListener.js');
         });
         for (let key in squares) {
-            if (squares.hasOwnProperty(key))
-                squares[key].prependTo(board);
+            squares[key].prependTo(board);
         }
         for (let key in ownedTexts) {
-            if (ownedTexts.hasOwnProperty(key))
-                ownedTexts[key].prependTo(board);
+            ownedTexts[key].prependTo(board);
         }
+        // for (let key in scoreTexts) {
+        //     scoreTexts[key].prependTo(board);
+        // }
         ready = true;
         console.log("ChessCom fully loaded.");
     });
@@ -230,6 +240,7 @@ else {
 window.addEventListener('message', function (event) {
     if (event.data.type === 'fen') {
         color = event.data.color;
+
         chrome.runtime.sendMessage(event.data, function (response) {
         });
     }
@@ -265,47 +276,45 @@ function UpdateBoard(data) {
     $('.customSquare').hide();
     console.log("Updating board square colors...");
     data.cells.forEach(function (square) {
-        for (let key in square) {
-            if (square.hasOwnProperty(key)) {
-                if (square[key] === "Black") {
-                    $(ownedTexts[key]).find("p").text("B").css({color: "black"});
-                    $(ownedTexts[key]).show();
-                }
-                else if (square[key] === "White") {
-                    $(ownedTexts[key]).find("p").text("W").css({color: "white"});
-                    $(ownedTexts[key]).show();
-                }
-                else if (square[key] === "Neutral") {
-                    $(ownedTexts[key]).find("p").text("N").css({color: "gray"});
-                    $(ownedTexts[key]).show();
-                }
-                else{
-                    $(ownedTexts[key]).hide();
-                }
-            }
+        let dominance = square.dominance
+        let cell = square.name
+        let blackAttackers = square.blackAttackers
+        let whiteAttackers = square.whiteAttackers
+        let score = whiteAttackers.length - blackAttackers.length;
+        $(ownedTexts[cell]).show();
+        if (dominance === "Black") {
+            $(ownedTexts[cell]).find(".dominance").text("B").css({color: "black"});
         }
+        else if (dominance === "White") {
+            $(ownedTexts[cell]).find(".dominance").text("W").css({color: "blue"});
+        }
+        else if (dominance === "Neutral") {
+            $(ownedTexts[cell]).find(".dominance").text("C").css({color: "orange"});
+        }
+        // console.log(cell, 'score:', score)
+        $(ownedTexts[cell]).find(".score").text(`${score}`).css({color: "#2b2d2f"});
+
     });
     data.pieces.forEach(function (piece) {
-        for (let key in piece) {
-            if (piece.hasOwnProperty(key)) {
-                if (piece[key] === "Protected") {
-                    squares[key].css({"background-color": defenedColor});
-                    squares[key].show();
-                }
-                else if (piece[key] === "Attacked") {
-                    squares[key].css({"background-color": attacked});
-                    squares[key].show();
-                }
-                else if (piece[key] === "Neutral") {
+        let safety = piece.safety;
+        let square = piece.square
+        if (safety === "Protected") {
+            squares[square].css({"background-color": DEFENDED});
+            squares[square].show();
+        }
+        else if (safety === "Attacked") {
+            squares[square].css({"background-color": ATTACKED});
+            squares[square].show();
+        }
+        else if (safety === "Neutral") {
 
-                    squares[key].css({"background-color": neutralColor});
-                    squares[key].show();
-                }
-                else{
-                    squares[key].hide();
-                }
-            }
+            squares[square].css({"background-color": NEUTRAL});
+            squares[square].show();
+        }
+        else{
+            squares[square].hide();
         }
     });
     console.log("Finished.");
 }
+window.onresize = LoadChessComDivs;

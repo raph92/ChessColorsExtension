@@ -1,89 +1,46 @@
-﻿let chessBoard;
-const observer = new MutationObserver(function (mutate) {
-
-    let elements = document.querySelectorAll('.chessboard');
-    for (let i = 0; i < elements.length; i++) {
-        let element = elements[i];
-        if (element.id.indexOf('dummyBoard') > -1)
-            continue;
-        if (element.ready)
-            continue;
-
-        element.ready = true;
-        if (chessBoard == null)
-            chessBoard = element.chessBoard;
-        console.log("chessboard is", chessBoard);
-        console.log(chessBoard._customEventStacks);
-        if (!chessBoard)
-            continue;
-        // chessBoard._customEventStacks['onDropPiece'].stack.push({
-        //     callback: ()=>{
-        //         console.log("onDropPiece called");
-        //         sendFen();
-        //     }
-        // });
-        // chessBoard._customEventStacks['onAfterMoveAnimated'].stack.push({
-        //     callback: ()=>{
-        //         console.log("onAfterMoveAnimated called");
-        //         sendFen()
-        //
-        //     }
-        // });
-        // chessBoard._customEventStacks['onBoardLoaded'].stack.push({
-        //     callback: ()=>{
-        //         console.log("onBoardLoaded called");
-        //         sendFen()
-        //     }
-        // });
-        // chessBoard._customEventStacks['onPartialResize'].stack.push({
-        //     callback: ()=>{
-        //         console.log("onPartialResize called.");
-        //         sendFen()
-        //     }
-        // });
-        chessBoard._customEventStacks['onRefresh'].stack.push({
-            callback: ()=>{
-                console.log("onRefresh called.");
-                sendFen()
-            }
-        });
-        chessBoard._customEventStacks['onRenderReady'].stack.push({
-            callback: () =>{
-                console.log("onRenderReady called");
-                sendFen();
-
-            }
-
-        });
+﻿let lastFen = ''
+const DEFAULT_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
+setInterval(function () {
+  try {
+    let element = document.querySelector('.move-feedback-row-component')
+    if (!element) {
+      element = document.querySelector('.lines-component')
     }
-
-});
-
-function sendFen() {
-    let color;
-    if (!chessBoard.boardFlip)
-        color = "white";
+    let fen
+    try {
+      fen = element.getAttribute('fen')
+    } catch (e) {
+      fen = DEFAULT_FEN
+    }
+    if (lastFen === fen)
+      return
+    lastFen = fen
+    // lines-component
+    sendFen(fen)
+  } catch (e) {
+    if (location.href.indexOf('analysis') === -1)
+      console.log(e)
     else
-        color = "black";
-    let fen = chessBoard.getBoardApi().getProperty('selectedFen');
-    console.log("board api is ", chessBoard.getBoardApi());
-    let message = {
-        type: 'fen',
-        color: color,
-        fen: fen,
-    };
-    window.postMessage(message, '*');
+      console.log(e)
+  }
+}, 200)
+
+function getColor () {
+  let element = document.querySelectorAll('.evaluation-bar-color')
+  console.log(element)
+  const userColor = element[1]
+  return 'white' in userColor.attributes ? 'white' : 'black'
 }
 
-let element;
-if (location.href.indexOf("computer") > -1)
-    element = document.getElementById('content');
-else
-    element = document.getElementsByClassName('chessboard-component_0')[0];
-
-observer.observe(element, {
-    childList: true,
-    subtree: true,
-    attributes: false,
-    characterData: false
-});
+function sendFen (fen) {
+  console.log(JSON.stringify(fen))
+  let color = getColor()
+  console.log(color)
+  console.log('board fen is ', fen)
+  let message = {
+    type: 'fen',
+    color: color,
+    fen: fen,
+  }
+  window.postMessage(message, '*')
+}

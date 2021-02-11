@@ -1,6 +1,5 @@
 let move = null;
 let conn;
-let cache = null;
 let cacheQueue = [];
 let attempts = 0;
 let maxAttempts = 20;

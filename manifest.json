@@ -1,21 +1,8 @@
 ﻿{
   "manifest_version": 2,
-  "name": "Chess Colors",
+  "name": "ChessColors Companion Extension",
   "description": "",
   "version": "0.0.1",
-  "browser_action": {
-    "default_icon": {
-      "19": "images/icon19.png",
-      "38": "images/icon38.png"
-    },
-    "default_popup": "popup.html",
-    "default_title": "Chess Colors"
-  },
-  "icons": {
-    "16": "images/icon16.png",
-    "48": "images/icon48.png",
-    "128": "images/icon128.png"
-  },
   "background": {
     "scripts": [
       "js/background.js"
@@ -25,23 +12,20 @@
   "content_scripts": [
     {
       "matches": [
-        "http://*.lichess.org/*",
-        "https://*.lichess.org/*",
         "https://*.chess.com/*analysis*",
         "http://*.chess.com/*analysis*"
       ],
       "js": [
         "js/jquery-3.2.1.min.js",
-        "js/content.js"
+        "js/content.js",
+        "js/util.js"
       ],
       "run_at": "document_end"
     }
   ],
   "permissions": [
-    "https://*.lichess.org/*",
     "https://*.chess.com/*analysis*",
     "http://*.chess.com/*analysis*",
-    "http://*.lichess.org/*",
     "activeTab",
     "tabs",
     "storage",
@@ -54,7 +38,6 @@
   ],
   "externally_connectable": {
     "matches": [
-      "*://*.lichess.org/*",
       "https://*.chess.com/*analysis*",
       "http://*.chess.com/*analysis*",
       "*://localhost/*"

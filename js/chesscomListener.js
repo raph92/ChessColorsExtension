@@ -1,35 +1,28 @@
-﻿let lastFen = ''
-const DEFAULT_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
-setInterval(function () {
-  try {
-    let element = document.querySelector('.move-feedback-row-component')
-    if (!element) {
-      element = document.querySelector('.lines-component')
-    }
-    let fen
-    try {
-      fen = element.getAttribute('fen')
-    } catch (e) {
-      fen = DEFAULT_FEN
-    }
-    if (lastFen === fen)
-      return
-    lastFen = fen
-    // lines-component
-    sendFen(fen)
-  } catch (e) {
-    if (location.href.indexOf('analysis') === -1)
-      console.log(e)
-    else
-      console.log(e)
+﻿
+let lastFen = ''
+function hideModal () {
+  // Append styles element
+  const style = $('<style/>').prependTo('body')
+  // .share-menu-modal {
+  //   display: none !important;
+  // }
+  style.html(`
+  .modal-container-component {
+    display: none !important;
   }
-}, 200)
+  `)
+  return style
+}
 
 function getColor () {
-  let element = document.getElementsByClassName('evaluation-bar-fill')[0].children
-  console.log(element)
-  const userColor = element[1]
-  return userColor.className.indexOf('white') > -1  ? 'white' : 'black'
+  let color
+  const board = document.querySelector('chess-board')
+  if (board.className.indexOf('flipped') > -1) {
+    color = 'black'
+  } else
+    color = 'white'
+  console.log(color)
+  return color
 }
 
 function sendFen (fen) {
@@ -44,3 +37,65 @@ function sendFen (fen) {
   }
   window.postMessage(message, '*')
 }
+
+let mutationTrackerNo = 0
+// Options for the observer (which mutations to observe)
+const config = {
+  attributes: true,
+  childList: true,
+  subtree: false,
+  attributeOldValue: true,
+}
+
+const callback = function (mutationsList, observer) {
+  // Use traditional 'for loops' for IE 11
+  mutationTrackerNo++
+  for (const mutation of mutationsList) {
+    switch (mutation.type){
+      case "attributes":
+        switch (mutation.attributeName){
+          case "class":
+            console.log('Piece class changed')
+            // const style = hideModal()
+            let fen
+            $('.share-menu-tab-pgn-section' +
+              ' .form-input-component' +
+              ' > input').ready(() => {
+              fen = document.querySelector('.share-menu-tab-pgn-section' +
+                ' .form-input-component' +
+                ' > input').value
+              // style.remove()
+              if (lastFen === fen)
+                return
+              lastFen = fen
+              // lines-component
+              sendFen(fen)
+            })
+        }
+    }
+  }
+}
+function docReady (fn) {
+  // https://stackoverflow.com/a/9899701
+  // see if DOM is already available
+  if (document.readyState === 'complete' || document.readyState ===
+    'interactive') {
+    // call on next available tick
+    setTimeout(fn, 1)
+  } else {
+    document.addEventListener('DOMContentLoaded', fn)
+  }
+}
+let $ = window.jQuery
+docReady(function () {
+  const style = hideModal()
+  $('[data-test="download"]').ready(()=> {
+    document.querySelector('[data-test="download"]').click()
+  })
+  // Select the node that will be observed for mutations
+  const targetNode = document.querySelector('chess-board')
+// Create an observer instance linked to the callback function
+  const observer = new MutationObserver(callback)
+// Start observing the target node for configured mutations
+  observer.observe(targetNode, config)
+})

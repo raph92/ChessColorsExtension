@@ -16,7 +16,7 @@ let squareRowDictionary
 let squareColDictionary
 
 let board
-let color
+let color;
 let squareSize
 
 let ready = false
@@ -99,7 +99,7 @@ function LoadChessComDivs () {
   }
   let col
   let row
-
+  color = board.attr('class').indexOf('flipped') > -1 ? 'black' : 'white'
   for (let key in squares) {
     if (squares.hasOwnProperty(key)) {
       col = squareColDictionary[key[0]]
@@ -235,36 +235,6 @@ if (location.href.indexOf('chess.com') > -1) {
   })
 }
 
-window.addEventListener('message', function (event) {
-  if (event.data.type === 'fen') {
-    color = event.data.color
-
-    chrome.runtime.sendMessage(event.data, function (response) {
-    })
-  } else if (event.data.type === 'render') {
-    console.log('Re-rendering.')
-    color = event.data.color
-    LoadChessComDivs()
-  }
-})
-
-// receive messages from background.js
-chrome.runtime.onMessage.addListener(
-  function (data) {
-    console.log('Received message from Mothership\nType:', data.type)
-    if (data.type === 'state') {
-      UpdateBoard(JSON.parse(data.state))
-    }
-    if (data.type === 'find') {
-      reInitDivs()
-    }
-
-    if (data.type === 'flip') {
-      LoadChessComDivs()
-    }
-
-  })
-
 function UpdateBoard (data) {
   console.log('Received board state.', data)
   if (!ready)
@@ -279,20 +249,21 @@ function UpdateBoard (data) {
     let whiteAttackers = square.whiteAttackers
     let score = whiteAttackers.length - blackAttackers.length
     $(ownedTexts[cell]).show()
+    const cellElement = $(ownedTexts[cell]).find('.dominance')
     if (dominance === 'Black') {
-      $(ownedTexts[cell]).find('.dominance').text('B').css({ color: 'green' })
+      cellElement.text('B').css({ color: 'green' })
     } else if (dominance === 'White') {
-      $(ownedTexts[cell]).find('.dominance').text('W').css({ color: 'blue' })
+      cellElement.text('W').css({ color: 'blue' })
     } else if (dominance === 'Neutral') {
-      $(ownedTexts[cell]).find('.dominance').text('C').css({ color: 'orange' })
-    } else{
-      $(ownedTexts[cell]).find('.dominance').hide()
+      cellElement.text('C').css({ color: 'orange' })
+    } else {
+      cellElement.text('N').css({ color: '#D3D3D3' })
     }
     // console.log(cell, 'score:', score)
     $(ownedTexts[cell]).
       find('.score').
       text(`${score}`).
-      css({ color: 'gray' });
+      css({ color: 'gray' })
   })
   data.pieces.forEach(function (piece) {
     let safety = piece.safety
@@ -313,5 +284,28 @@ function UpdateBoard (data) {
   })
   console.log('Finished.')
 }
-
+// CALL BACKS AND LISTENERS
 window.onresize = LoadChessComDivs
+window.addEventListener('message', function (event) {
+  if (event.data.type === 'fen') {
+    chrome.runtime.sendMessage(event.data, function (response) {
+    })
+  }
+})
+
+// receive messages from background.js
+chrome.runtime.onMessage.addListener(
+  function (data) {
+    console.log('Received message from Mothership\nType:', data.type)
+    if (data.type === 'state') {
+      UpdateBoard(JSON.parse(data.state))
+    }
+    if (data.type === 'find') {
+      reInitDivs()
+    }
+
+    if (data.type === 'flip') {
+      LoadChessComDivs()
+    }
+
+  })
